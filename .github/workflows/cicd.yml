@@ -1,0 +1,43 @@
+name: Hexo CICD
+
+on:
+  push:
+    branches:
+      - main  # default branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # If your repository depends on submodule, please see: https://github.com/actions/checkout
+          submodules: recursive
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18'
+      - name: Cache NPM dependencies
+        uses: actions/cache@v2
+        with:
+          path: node_modules
+          key: ${{ runner.OS }}-npm-cache
+          restore-keys: |
+            ${{ runner.OS }}-npm-cache
+      - name: Install Dependencies
+        run: npm i && npm ci
+      - name: Build
+        run: npm run build
+      - name: Deploy
+        id: deploy
+        uses: sma11black/hexo-action@v1.0.3
+        with:
+          deploy_key: ${{ secrets.DEPLOY_KEY }}
+          user_name: chengxufeng1994  # (or delete this input setting to use bot account)
+          user_email: benny12628@gmail.com    # (or delete this input setting to use bot account)
+      - name: Output
+        run: |
+          echo "${{ steps.deploy.outputs.notify }}"
