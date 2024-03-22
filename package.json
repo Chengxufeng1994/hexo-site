@@ -7,7 +7,10 @@
     "clean": "hexo clean",
     "deploy": "hexo deploy",
     "server": "hexo server",
-    "submodule-update": "git submodule update --init --force --recursive --remote"
+    "submodule-update": "git submodule update --init --force --recursive --remote",
+    "commit": "cz",
+    "prepare": "husky",
+    "commitlint": "commitlint --edit"
   },
   "hexo": {
     "version": "7.1.1"
@@ -25,5 +28,17 @@
     "hexo-renderer-stylus": "^3.0.1",
     "hexo-server": "^3.0.0",
     "hexo-theme-landscape": "^1.0.0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.2.1",
+    "@commitlint/config-conventional": "^19.1.0",
+    "commitizen": "^4.3.0",
+    "cz-conventional-changelog": "^3.3.0",
+    "husky": "^9.0.11"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }
