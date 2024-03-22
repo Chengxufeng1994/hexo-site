@@ -5,6 +5,10 @@ on:
     branches:
       - main  # default branch
 
+env:
+  GITHUB_USERNAME: chengxufeng1994 
+  GITHUB_EMAIL: benny12628@gmail.com
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -13,13 +17,40 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+
           # If your repository depends on submodule, please see: https://github.com/actions/checkout
           submodules: recursive
+
+      - name: Install required dependencies
+        run: |
+          sudo apt update -y
+          sudo apt install -y git curl
+
       - name: Use Node.js 20.x
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: Print versions
+        run: |
+          git --version
+          node --version
+          npm --version
+          npx commitlint --version
+
+      - name: Install commitlint
+        run: |
+          npm install conventional-changelog-conventionalcommits
+          npm install commitlint@latest
+
+      - name: Validate current commit (last commit) with commitlint
+        if: github.event_name == 'push'
+        run: npx commitlint --last --verbose
+
+      - name: Validate PR commits with commitlint
+        if: github.event_name == 'pull_request'
+        run: npx commitlint --from ${{ github.event.pull_request.head.sha }}~${{ github.event.pull_request.commits }} --to ${{ github.event.pull_request.head.sha }} --verbose
+        
       - name: Cache NPM dependencies
         uses: actions/cache@v4
         with:
@@ -27,17 +58,24 @@ jobs:
           key: ${{ runner.OS }}-npm-cache
           restore-keys: |
             ${{ runner.OS }}-npm-cache
+
       - name: Install Dependencies
         run: npm i && npm ci
+
       - name: Build
         run: npm run build
-      - name: Deploy
+
+      - name: Deploy 
         id: deploy
-        uses: sma11black/hexo-action@v1.0.3
-        with:
-          deploy_key: ${{ secrets.DEPLOY_KEY }}
-          user_name: chengxufeng1994  # (or delete this input setting to use bot account)
-          user_email: benny12628@gmail.com    # (or delete this input setting to use bot account)
+        run: |
+          mkdir -p ~/.ssh/
+          echo "${{secrets.DEPLOY_KEY}}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          git config --global user.name ${{ env.GITHUB_USERNAME }}
+          git config --global user.email ${{ env.GITHUB_EMAIL }} 
+          npm run deploy
+
       - name: Output
         run: |
           echo "${{ steps.deploy.outputs.notify }}"
